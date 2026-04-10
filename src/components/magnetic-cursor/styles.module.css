@@ -1,0 +1,102 @@
+/* body {
+  cursor: none;
+} */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  height: 300px;
+  width: 500px;
+  gap: 20px;
+}
+
+.grid_row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.grid_element {
+  border: 1px dashed lightgray;
+  flex: 1;
+}
+
+/* Cursor */
+.cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* border: 1px solid red; */
+}
+
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+.cursor-edges {
+  width: 42px;
+  height: 42px;
+  position: absolute;
+  transform: translate(calc(-50% + 3px), calc(-50% + 3px));
+  animation: rotation 4s linear infinite;
+}
+
+@keyframes rotation {
+  to {
+    /* search why this works hehe */
+    transform: translate(calc(-50% + 3px), calc(-50% + 3px)) rotate(360deg);
+  }
+}
+
+.cursor-edges > div {
+  background-color: white;
+  position: absolute;
+}
+.edge-top-left-1 {
+  width: 10px;
+  height: 2px;
+}
+.edge-top-left-2 {
+  width: 2px;
+  height: 10px;
+}
+.edge-top-right-1 {
+  width: 10px;
+  height: 2px;
+  right: 0;
+  top: 0;
+}
+.edge-top-right-2 {
+  width: 2px;
+  height: 10px;
+  right: 0;
+  top: 0;
+}
+.edge-bot-right-1 {
+  width: 10px;
+  height: 2px;
+  right: 0;
+  bottom: 0;
+}
+.edge-bot-right-2 {
+  width: 2px;
+  height: 10px;
+  right: 0;
+  bottom: 0;
+}
+.edge-bot-left-1 {
+  width: 10px;
+  height: 2px;
+  left: 0;
+  bottom: 0;
+}
+.edge-bot-left-2 {
+  width: 2px;
+  height: 10px;
+  left: 0;
+  bottom: 0;
+}
