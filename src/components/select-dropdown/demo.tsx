@@ -1,7 +1,7 @@
 // https://countriesnow.space/api/v0.1/countries/positions
 // https://countriesnow.space/api/v0.1/countries/cities/q?country=Armenia
 
-const countries = [
+const COUNTRIES = [
   "Albania",
   "Botswana",
   "Bulgaria",
@@ -15,18 +15,7 @@ const countries = [
   "India",
 ];
 
-// export function SelectDropdownDemo() {
-//   return (
-//     <Select.Dropdown defaultValue={countries[0]}>
-//       {countries.map((c) => (
-//         <Select.Option key={c} value={c}>
-//           {c}
-//         </Select.Option>
-//       ))}
-//     </Select.Dropdown>
-//   );
-// }
-
+import { useEffect, useState } from "react";
 import {
   Combobox,
   ComboboxContent,
@@ -36,10 +25,53 @@ import {
   ComboboxList,
 } from "./";
 
+async function fakeFetch(text: string) {
+  return new Promise((res) => {
+    setTimeout(() => {
+      res(
+        ["Argentina", "Argelia", "Armenia", ...COUNTRIES].filter((c) =>
+          c.toLowerCase().includes(text.toLowerCase()),
+        ),
+      );
+    }, 2000);
+  });
+}
+
+export function ComboboxDemo() {
+  return (
+    <>
+      <ComboboxBasic />
+      <ComboboxBasic />
+    </>
+  );
+}
+
+// ideas
+// lazy loading (more users)
+// keyboard navigation
+
 export function ComboboxBasic() {
+  const [countries, setCountries] = useState(COUNTRIES);
+  const [input, setInput] = useState("");
+  // useDebounce(...) // todo: hw (+loading)
+
+  useEffect(() => {
+    if (input) {
+      fakeFetch(input).then((results) => {
+        setCountries(results);
+      });
+    }
+  }, [input]);
+
   return (
     <Combobox items={countries}>
-      <ComboboxInput placeholder="Select a framework" />
+      <ComboboxInput
+        onChange={(text: string) => {
+          setInput(text);
+          // setTimeout not here => lost reference
+        }}
+        placeholder="Select a framework"
+      />
       <ComboboxContent>
         <ComboboxEmpty>No items found.</ComboboxEmpty>
         <ComboboxList>
