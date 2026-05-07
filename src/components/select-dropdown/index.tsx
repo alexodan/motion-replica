@@ -1,4 +1,4 @@
-import {
+import React, {
   createContext,
   useContext,
   useEffect,
@@ -20,6 +20,7 @@ interface ComboboxContextType {
   setSearchValue: (value: string) => void;
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
+  setCurrentFocusIndex: (n: number) => void;
 }
 
 const ComboboxContext = createContext<ComboboxContextType | undefined>(
@@ -53,6 +54,7 @@ export function Combobox({
   const [searchValue, setSearchValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [currentFocusIndex, setCurrentFocusIndex] = useState(0);
 
   // event listener to close combobox when click outside
   useEffect(() => {
@@ -70,7 +72,6 @@ export function Combobox({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
   const onOptionSelected = (value: any) => {
     setSelectedValue(value);
     setIsOpen(false);
@@ -86,9 +87,30 @@ export function Combobox({
         setSearchValue,
         isOpen,
         setIsOpen,
+        currentFocusIndex,
+        setCurrentFocusIndex,
       }}
     >
-      <div ref={containerRef} id="combobox">
+      <div
+        ref={containerRef}
+        id="combobox"
+        onKeyDown={(e) => {
+          const totalItems = items.length;
+          if (e.key === "ArrowDown") {
+            console.log("arrow down hit");
+            setCurrentFocusIndex((prevIndex) => {
+              if (prevIndex === totalItems - 1) {
+                return 0;
+              }
+              return prevIndex + 1;
+            });
+          } else if (e.key === "ArrowUp") {
+            setCurrentFocusIndex((prevIndex) => {
+              return prevIndex - 1;
+            });
+          }
+        }}
+      >
         {children}
       </div>
     </ComboboxContext.Provider>
@@ -101,11 +123,13 @@ interface ComboboxInputProps {
 }
 
 export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
-  const { setIsOpen, searchValue, setSearchValue } = useComboboxContext();
+  const { setIsOpen, searchValue, setSearchValue, setCurrentFocusIndex } =
+    useComboboxContext();
 
   // onClick handles visibility of ComboboxContent (popover)
   const handleClick = () => {
     setIsOpen(true);
+    setCurrentFocusIndex(-1);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +143,7 @@ export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
   return (
     <div>
       <input
+        // ref={}
         type="text"
         value={displayValue || ""}
         onChange={handleChange}
@@ -155,23 +180,44 @@ export function ComboboxList({ children }: ComboboxListProps) {
       )
     : items;
 
-  return <>{filteredItems.map((item) => children(item))}</>;
+  return (
+    <>
+      {filteredItems.map((item, index) => {
+        return React.cloneElement(children(item), { index });
+      })}
+    </>
+  );
 }
 
 interface ComboboxItemProps {
   value: any;
   children: ReactNode;
+  index: number;
 }
 
-export function ComboboxItem({ value, children }: ComboboxItemProps) {
-  const { onOptionSelected, setSearchValue } = useComboboxContext();
+export function ComboboxItem({ value, children, index }: ComboboxItemProps) {
+  const { onOptionSelected, setSearchValue, currentFocusIndex } =
+    useComboboxContext();
+  const itemRef = useRef<HTMLDivElement>(null);
 
   const handleClick = () => {
     onOptionSelected(value);
     setSearchValue(String(value));
   };
 
-  return <div onClick={handleClick}>{children}</div>;
+  // console.log("currentFocusIndex:", currentFocusIndex);
+
+  useEffect(() => {
+    if (index === currentFocusIndex) {
+      itemRef.current?.focus();
+    }
+  }, [currentFocusIndex, index]);
+
+  return (
+    <div ref={itemRef} onClick={handleClick} tabIndex={-1}>
+      {children}
+    </div>
+  );
 }
 
 export function ComboboxEmpty({ children }: PropsWithChildren) {

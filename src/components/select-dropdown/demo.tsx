@@ -41,19 +41,19 @@ export function ComboboxDemo() {
   return (
     <>
       <ComboboxBasic />
-      <ComboboxBasic />
+      {/* <ComboboxBasic /> */}
     </>
   );
 }
 
 // ideas
-// lazy loading (more users)
 // keyboard navigation
+// lazy loading (more users)
+// a11y is broken
 
 export function ComboboxBasic() {
   const [countries, setCountries] = useState(COUNTRIES);
   const [input, setInput] = useState("");
-  // useDebounce(...) // todo: hw (+loading)
 
   useEffect(() => {
     if (input) {
