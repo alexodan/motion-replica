@@ -21,6 +21,7 @@ interface ComboboxContextType {
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
   setCurrentFocusIndex: (n: number) => void;
+  onLoadMore?: () => void;
 }
 
 const ComboboxContext = createContext<ComboboxContextType | undefined>(
@@ -49,12 +50,14 @@ function useComboboxContext() {
 export function Combobox({
   items,
   children,
-}: PropsWithChildren<{ items: any[] }>) {
-  const [selectedValue, setSelectedValue] = useState<any>(null);
+  onLoadMore,
+}: PropsWithChildren<{ items: string[]; onLoadMore?: () => void }>) {
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentFocusIndex, setCurrentFocusIndex] = useState(0);
+  const [currentFocusValue, setCurrentFocusValue] = useState<string>("");
 
   // event listener to close combobox when click outside
   useEffect(() => {
@@ -72,7 +75,8 @@ export function Combobox({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  const onOptionSelected = (value: any) => {
+
+  const onOptionSelected = (value: string) => {
     setSelectedValue(value);
     setIsOpen(false);
   };
@@ -89,6 +93,8 @@ export function Combobox({
         setIsOpen,
         currentFocusIndex,
         setCurrentFocusIndex,
+        setCurrentFocusValue,
+        onLoadMore,
       }}
     >
       <div
@@ -100,14 +106,22 @@ export function Combobox({
             console.log("arrow down hit");
             setCurrentFocusIndex((prevIndex) => {
               if (prevIndex === totalItems - 1) {
-                return 0;
+                return -1;
               }
               return prevIndex + 1;
             });
           } else if (e.key === "ArrowUp") {
             setCurrentFocusIndex((prevIndex) => {
+              if (prevIndex < 0) {
+                return totalItems - 1;
+              }
               return prevIndex - 1;
             });
+          } else if (e.key === "Enter") {
+            console.log("value:", currentFocusValue);
+            onOptionSelected(currentFocusValue);
+            setSearchValue(currentFocusValue);
+            setCurrentFocusIndex(-1);
           }
         }}
       >
@@ -123,8 +137,15 @@ interface ComboboxInputProps {
 }
 
 export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
-  const { setIsOpen, searchValue, setSearchValue, setCurrentFocusIndex } =
-    useComboboxContext();
+  const {
+    isOpen,
+    setIsOpen,
+    searchValue,
+    setSearchValue,
+    currentFocusIndex,
+    setCurrentFocusIndex,
+  } = useComboboxContext();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // onClick handles visibility of ComboboxContent (popover)
   const handleClick = () => {
@@ -134,17 +155,26 @@ export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchValue(e.target.value);
-    setIsOpen(true); // todo:
+    setIsOpen(true);
     onChange(e.target.value);
   };
+
+  useEffect(() => {
+    if (currentFocusIndex === -1) {
+      inputRef.current?.focus();
+    }
+  }, [currentFocusIndex]);
 
   const displayValue = searchValue;
 
   return (
     <div>
       <input
-        // ref={}
+        ref={inputRef}
         type="text"
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-autocomplete="list"
         value={displayValue || ""}
         onChange={handleChange}
         onClick={handleClick}
@@ -170,7 +200,7 @@ interface ComboboxListProps {
   children: (item: any) => ReactNode;
 }
 
-export function ComboboxList({ children }: ComboboxListProps) {
+export function ComboboxList({ children, ...props }: ComboboxListProps) {
   const { items, searchValue } = useComboboxContext();
 
   // filtering based on searchValue
@@ -180,12 +210,19 @@ export function ComboboxList({ children }: ComboboxListProps) {
       )
     : items;
 
+  console.log("[DEBUG] all items", { items, filteredItems });
+
   return (
-    <>
+    <div
+      style={{ maxHeight: "100px", overflowY: "auto" }}
+      role="listbox"
+      aria-orientation="vertical"
+      {...props}
+    >
       {filteredItems.map((item, index) => {
-        return React.cloneElement(children(item), { index });
+        return React.cloneElement(children?.({ item, index }), { index });
       })}
-    </>
+    </div>
   );
 }
 
@@ -196,8 +233,14 @@ interface ComboboxItemProps {
 }
 
 export function ComboboxItem({ value, children, index }: ComboboxItemProps) {
-  const { onOptionSelected, setSearchValue, currentFocusIndex } =
-    useComboboxContext();
+  const {
+    items,
+    onOptionSelected,
+    setSearchValue,
+    currentFocusIndex,
+    setCurrentFocusValue,
+    onLoadMore,
+  } = useComboboxContext();
   const itemRef = useRef<HTMLDivElement>(null);
 
   const handleClick = () => {
@@ -210,11 +253,42 @@ export function ComboboxItem({ value, children, index }: ComboboxItemProps) {
   useEffect(() => {
     if (index === currentFocusIndex) {
       itemRef.current?.focus();
+      setCurrentFocusValue(value);
     }
-  }, [currentFocusIndex, index]);
+  }, [currentFocusIndex, index, setCurrentFocusValue, value]);
+
+  /**
+   * Infinite scroll idea:
+   * Grab the last item in the dropdown list
+   * Add a scroll event that detects when that last item appears in the window
+   * When that happens trigger a onLoadMore(...)
+   */
+  const isLastItem = index === items.length - 1;
+  useEffect(() => {
+    if (!isLastItem) return;
+
+    const lastItem = itemRef.current;
+    if (!lastItem) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        console.log("[DEBUG]: index", index);
+        onLoadMore?.();
+      }
+    });
+
+    observer.observe(lastItem);
+    return () => observer.disconnect();
+  }, [isLastItem, onLoadMore, index]);
 
   return (
-    <div ref={itemRef} onClick={handleClick} tabIndex={-1}>
+    <div
+      ref={itemRef}
+      role="option"
+      aria-selected={index === currentFocusIndex}
+      onClick={handleClick}
+      tabIndex={-1}
+    >
       {children}
     </div>
   );
