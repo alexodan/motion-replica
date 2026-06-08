@@ -5,23 +5,23 @@ import React, {
   useRef,
   useState,
   type PropsWithChildren,
-  type ReactNode,
 } from "react";
 import { IoChevronDown } from "react-icons/io5";
 
 import styles from "./styles.module.css";
 
 interface ComboboxContextType {
-  items: any[];
-  //
-  selectedValue: any;
-  onOptionSelected: (value: any) => void;
+  items: string[];
+  selectedValue: string | null;
+  onOptionSelected: (value: string) => void;
   searchValue: string;
   setSearchValue: (value: string) => void;
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
   setCurrentFocusIndex: (n: number) => void;
   onLoadMore?: () => void;
+  currentFocusIndex: number;
+  setCurrentFocusValue: (value: string) => void;
 }
 
 const ComboboxContext = createContext<ComboboxContextType | undefined>(
@@ -100,10 +100,11 @@ export function Combobox({
       <div
         ref={containerRef}
         id="combobox"
+        className={styles.combobox}
         onKeyDown={(e) => {
           const totalItems = items.length;
           if (e.key === "ArrowDown") {
-            console.log("arrow down hit");
+            // todo use values instead
             setCurrentFocusIndex((prevIndex) => {
               if (prevIndex === totalItems - 1) {
                 return -1;
@@ -118,7 +119,6 @@ export function Combobox({
               return prevIndex - 1;
             });
           } else if (e.key === "Enter") {
-            console.log("value:", currentFocusValue);
             onOptionSelected(currentFocusValue);
             setSearchValue(currentFocusValue);
             setCurrentFocusIndex(-1);
@@ -179,6 +179,7 @@ export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
         onChange={handleChange}
         onClick={handleClick}
         placeholder={placeholder}
+        className={styles["combobox-input"]}
       />
       <IoChevronDown onClick={handleClick} />
     </div>
@@ -196,9 +197,13 @@ export function ComboboxContent({ children }: PropsWithChildren) {
   return <div className={styles["combobox-content"]}>{children}</div>;
 }
 
-interface ComboboxListProps {
-  children: (item: any) => ReactNode;
-}
+type ComboboxListProps = {
+  ref?: React.Ref<HTMLDivElement>;
+  children: (props: {
+    item: string;
+    index: number;
+  }) => React.ReactElement<{ index?: number }>;
+};
 
 export function ComboboxList({ children, ...props }: ComboboxListProps) {
   const { items, searchValue } = useComboboxContext();
@@ -210,8 +215,6 @@ export function ComboboxList({ children, ...props }: ComboboxListProps) {
       )
     : items;
 
-  console.log("[DEBUG] all items", { items, filteredItems });
-
   return (
     <div
       style={{ maxHeight: "100px", overflowY: "auto" }}
@@ -220,19 +223,21 @@ export function ComboboxList({ children, ...props }: ComboboxListProps) {
       {...props}
     >
       {filteredItems.map((item, index) => {
-        return React.cloneElement(children?.({ item, index }), { index });
+        return React.cloneElement(children({ item, index }), { index });
       })}
     </div>
   );
 }
 
 interface ComboboxItemProps {
-  value: any;
-  children: ReactNode;
-  index: number;
+  value: string;
 }
 
-export function ComboboxItem({ value, children, index }: ComboboxItemProps) {
+export function ComboboxItem({
+  value,
+  children,
+  index, // todo remove
+}: PropsWithChildren<ComboboxItemProps>) {
   const {
     items,
     onOptionSelected,
@@ -247,8 +252,6 @@ export function ComboboxItem({ value, children, index }: ComboboxItemProps) {
     onOptionSelected(value);
     setSearchValue(String(value));
   };
-
-  // console.log("currentFocusIndex:", currentFocusIndex);
 
   useEffect(() => {
     if (index === currentFocusIndex) {
@@ -272,7 +275,6 @@ export function ComboboxItem({ value, children, index }: ComboboxItemProps) {
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        console.log("[DEBUG]: index", index);
         onLoadMore?.();
       }
     });
@@ -303,7 +305,7 @@ export function ComboboxEmpty({ children }: PropsWithChildren) {
       )
     : items;
 
-  if (filteredItems.length > 0) {
+  if (!searchValue || filteredItems.length > 0) {
     return null;
   }
 
