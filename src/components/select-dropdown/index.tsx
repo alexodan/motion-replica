@@ -18,9 +18,8 @@ interface ComboboxContextType {
   setSearchValue: (value: string) => void;
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
-  setCurrentFocusIndex: (n: number) => void;
   onLoadMore?: () => void;
-  currentFocusIndex: number;
+  currentFocusValue: string;
   setCurrentFocusValue: (value: string) => void;
 }
 
@@ -56,7 +55,6 @@ export function Combobox({
   const [searchValue, setSearchValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentFocusIndex, setCurrentFocusIndex] = useState(0);
   const [currentFocusValue, setCurrentFocusValue] = useState<string>("");
 
   // event listener to close combobox when click outside
@@ -91,8 +89,7 @@ export function Combobox({
         setSearchValue,
         isOpen,
         setIsOpen,
-        currentFocusIndex,
-        setCurrentFocusIndex,
+        currentFocusValue,
         setCurrentFocusValue,
         onLoadMore,
       }}
@@ -102,26 +99,28 @@ export function Combobox({
         id="combobox"
         className={styles.combobox}
         onKeyDown={(e) => {
-          const totalItems = items.length;
+          e.preventDefault();
           if (e.key === "ArrowDown") {
-            // todo use values instead
-            setCurrentFocusIndex((prevIndex) => {
-              if (prevIndex === totalItems - 1) {
-                return -1;
-              }
-              return prevIndex + 1;
+            setCurrentFocusValue((prev) => {
+              const index = items.indexOf(prev);
+              if (index === items.length - 1) return "";
+              return items[index + 1];
             });
           } else if (e.key === "ArrowUp") {
-            setCurrentFocusIndex((prevIndex) => {
-              if (prevIndex < 0) {
-                return totalItems - 1;
+            setCurrentFocusValue((prev) => {
+              const index = items.indexOf(prev);
+              if (index === 0) {
+                return "";
               }
-              return prevIndex - 1;
+              return items[index - 1];
             });
           } else if (e.key === "Enter") {
             onOptionSelected(currentFocusValue);
             setSearchValue(currentFocusValue);
-            setCurrentFocusIndex(-1);
+            setCurrentFocusValue("");
+          } else if (e.key === "Escape") {
+            setCurrentFocusValue("");
+            setIsOpen(false);
           }
         }}
       >
@@ -142,15 +141,14 @@ export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
     setIsOpen,
     searchValue,
     setSearchValue,
-    currentFocusIndex,
-    setCurrentFocusIndex,
+    currentFocusValue,
+    setCurrentFocusValue,
   } = useComboboxContext();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // onClick handles visibility of ComboboxContent (popover)
   const handleClick = () => {
     setIsOpen(true);
-    setCurrentFocusIndex(-1);
+    setCurrentFocusValue("");
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,10 +158,10 @@ export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
   };
 
   useEffect(() => {
-    if (currentFocusIndex === -1) {
+    if (!currentFocusValue) {
       inputRef.current?.focus();
     }
-  }, [currentFocusIndex]);
+  }, [currentFocusValue]);
 
   const displayValue = searchValue;
 
@@ -187,8 +185,8 @@ export function ComboboxInput({ onChange, placeholder }: ComboboxInputProps) {
 }
 
 export function ComboboxContent({ children }: PropsWithChildren) {
-  // const {isOpen} = useContext(ComboboxContent)
   const { isOpen } = useComboboxContext();
+  console.log("isOpen:", isOpen);
 
   if (!isOpen) {
     return null;
@@ -208,7 +206,6 @@ type ComboboxListProps = {
 export function ComboboxList({ children, ...props }: ComboboxListProps) {
   const { items, searchValue } = useComboboxContext();
 
-  // filtering based on searchValue
   const filteredItems = searchValue
     ? items.filter((item) =>
         String(item).toLowerCase().includes(searchValue.toLowerCase()),
@@ -217,7 +214,7 @@ export function ComboboxList({ children, ...props }: ComboboxListProps) {
 
   return (
     <div
-      style={{ maxHeight: "100px", overflowY: "auto" }}
+      style={{ maxHeight: "200px", overflowY: "auto" }}
       role="listbox"
       aria-orientation="vertical"
       {...props}
@@ -236,13 +233,12 @@ interface ComboboxItemProps {
 export function ComboboxItem({
   value,
   children,
-  index, // todo remove
 }: PropsWithChildren<ComboboxItemProps>) {
   const {
     items,
     onOptionSelected,
     setSearchValue,
-    currentFocusIndex,
+    currentFocusValue,
     setCurrentFocusValue,
     onLoadMore,
   } = useComboboxContext();
@@ -254,19 +250,15 @@ export function ComboboxItem({
   };
 
   useEffect(() => {
-    if (index === currentFocusIndex) {
+    if (currentFocusValue === value) {
       itemRef.current?.focus();
       setCurrentFocusValue(value);
     }
-  }, [currentFocusIndex, index, setCurrentFocusValue, value]);
+  }, [currentFocusValue, setCurrentFocusValue, value]);
 
-  /**
-   * Infinite scroll idea:
-   * Grab the last item in the dropdown list
-   * Add a scroll event that detects when that last item appears in the window
-   * When that happens trigger a onLoadMore(...)
-   */
-  const isLastItem = index === items.length - 1;
+  const isLastItem = items.indexOf(value) === items.length - 1;
+  console.log("last item:", value, items.indexOf(value), items.length);
+
   useEffect(() => {
     if (!isLastItem) return;
 
@@ -281,13 +273,13 @@ export function ComboboxItem({
 
     observer.observe(lastItem);
     return () => observer.disconnect();
-  }, [isLastItem, onLoadMore, index]);
+  }, [isLastItem, onLoadMore]);
 
   return (
     <div
       ref={itemRef}
       role="option"
-      aria-selected={index === currentFocusIndex}
+      aria-selected={currentFocusValue === value}
       onClick={handleClick}
       tabIndex={-1}
     >

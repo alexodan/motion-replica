@@ -16,11 +16,14 @@ export function ComboboxUsersBasic() {
   const listRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (input) {
-      fakeFetchUsers(input, inputOffset).then((results) => {
-        setUsers((prev) => [...prev, ...results]);
+    fakeFetchUsers(input, inputOffset).then((results) => {
+      console.log("calling fetch users...");
+      setUsers((prev) => {
+        const all = new Set(prev);
+        results.forEach((r) => all.add(r));
+        return Array.from(all);
       });
-    }
+    });
   }, [input, inputOffset]);
 
   /**
@@ -32,6 +35,8 @@ export function ComboboxUsersBasic() {
     console.log("[DEBUG]: loading more...");
     setInputOffset((prev) => prev + 1);
   }, []);
+
+  console.log("users:", users.length);
 
   return (
     <>
