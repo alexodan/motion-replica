@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Combobox } from "../";
 import {
-  Combobox,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "../";
+} from "../parts";
 import { fakeFetchUsers } from "../fake-fetch";
 
 export function ComboboxUsersBasic() {
@@ -25,11 +25,6 @@ export function ComboboxUsersBasic() {
       });
     });
   }, [input, inputOffset]);
-
-  /**
-   * TODO
-   * what if i want to control where the dropdown content renders, depending on the available space?
-   */
 
   const handleLoadMore = useCallback(() => {
     console.log("[DEBUG]: loading more...");
