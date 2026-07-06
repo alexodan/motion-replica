@@ -21,7 +21,15 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Keep hoisted @types/node (a Panda transitive dep) out of browser code */
+    "types": [],
+
+    /* Panda CSS generated code */
+    "paths": {
+      "styled-system/*": ["./styled-system/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "styled-system"]
 }

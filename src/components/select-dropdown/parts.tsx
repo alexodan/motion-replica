@@ -78,13 +78,7 @@ type ComboboxListProps = {
 };
 
 export function ComboboxList({ children, ...props }: ComboboxListProps) {
-  const { items, searchValue } = useComboboxContext();
-
-  const filteredItems = searchValue
-    ? items.filter((item) =>
-        String(item).toLowerCase().includes(searchValue.toLowerCase()),
-      )
-    : items;
+  const { filteredItems } = useComboboxContext();
 
   return (
     <div
@@ -109,11 +103,10 @@ export function ComboboxItem({
   children,
 }: PropsWithChildren<ComboboxItemProps>) {
   const {
-    items,
+    filteredItems,
     onOptionSelected,
     setSearchValue,
     currentFocusValue,
-    setCurrentFocusValue,
     onLoadMore,
   } = useComboboxContext();
   const itemRef = useRef<HTMLDivElement>(null);
@@ -124,14 +117,13 @@ export function ComboboxItem({
   };
 
   useEffect(() => {
-    console.log("current focused:", currentFocusValue);
     if (currentFocusValue === value) {
       itemRef.current?.focus();
-      setCurrentFocusValue(value);
     }
-  }, [currentFocusValue, setCurrentFocusValue, value]);
+  }, [currentFocusValue, value]);
 
-  const isLastItem = items.indexOf(value) === items.length - 1;
+  const isLastItem =
+    filteredItems.indexOf(value) === filteredItems.length - 1;
 
   useEffect(() => {
     if (!isLastItem) return;
@@ -163,15 +155,10 @@ export function ComboboxItem({
 }
 
 export function ComboboxEmpty({ children }: PropsWithChildren) {
-  const { items, searchValue } = useComboboxContext();
+  const { filteredItems, searchValue, isLoading } = useComboboxContext();
 
-  const filteredItems = searchValue
-    ? items.filter((item) =>
-        String(item).toLowerCase().includes(searchValue.toLowerCase()),
-      )
-    : items;
-
-  if (!searchValue || filteredItems.length > 0) {
+  // don't flash "no items" while a fetch is still in flight
+  if (isLoading || !searchValue || filteredItems.length > 0) {
     return null;
   }
 

@@ -1,6 +1,6 @@
-/* body {
+body {
   cursor: none;
-} */
+}
 
 .grid {
   display: grid;
@@ -23,32 +23,43 @@
 }
 
 /* Cursor */
-.cursor {
-  position: absolute;
-  top: 0;
-  left: 0;
-  /* border: 1px solid red; */
-}
-
 .cursor-dot {
+  position: fixed;
   width: 6px;
   height: 6px;
   background-color: white;
   border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .cursor-edges {
+  position: fixed;
   width: 42px;
   height: 42px;
-  position: absolute;
-  transform: translate(calc(-50% + 3px), calc(-50% + 3px));
+  transform: translate(-50%, -50%);
   animation: rotation 4s linear infinite;
+  pointer-events: none;
+  z-index: 999;
+  transition:
+    width 0.3s ease,
+    height 0.3s ease;
+}
+
+.cursor-edges-expanded {
+  animation: none;
+  transition:
+    top 0.15s ease-out,
+    left 0.15s ease-out,
+    width 0.3s ease,
+    height 0.3s ease;
 }
 
 @keyframes rotation {
   to {
     /* search why this works hehe */
-    transform: translate(calc(-50% + 3px), calc(-50% + 3px)) rotate(360deg);
+    transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 

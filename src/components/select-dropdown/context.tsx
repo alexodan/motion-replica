@@ -2,6 +2,8 @@ import { createContext, useContext } from "react";
 
 interface ComboboxContextType {
   items: string[];
+  filteredItems: string[];
+  isLoading?: boolean;
   selectedValue: string | null;
   onOptionSelected: (value: string) => void;
   searchValue: string;

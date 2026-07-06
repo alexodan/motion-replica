@@ -1,0 +1,114 @@
+/* universal selector, not body: buttons/inputs/links have their own cursor
+   value in the UA stylesheet, so inheritance from body never reaches them */
+* {
+  cursor: none !important;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  height: 300px;
+  width: 500px;
+  gap: 20px;
+}
+
+.grid_row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.grid_element {
+  border: 1px dashed lightgray;
+  background: none;
+  color: inherit;
+  font: inherit;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cursor: positioned ONLY via transform (top/left stay 0), so movement is
+   compositor-only work. will-change promotes it to its own GPU layer and
+   contain isolates the per-frame width/height writes from page layout. */
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 99999;
+  will-change: transform;
+  contain: layout;
+}
+
+.dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: white;
+  pointer-events: none;
+  z-index: 99999;
+  will-change: transform;
+}
+
+/* corners are pinned to the box edges and never transform themselves;
+   the parent's resize/rotate is what moves them */
+.cursor > div {
+  position: absolute;
+  background-color: white;
+}
+.corner-top-left-v {
+  width: 2px;
+  height: 10px;
+  top: 0;
+  left: 0;
+}
+.corner-top-left-h {
+  width: 10px;
+  height: 2px;
+  top: 0;
+  left: 0;
+}
+.corner-top-right-v {
+  width: 2px;
+  height: 10px;
+  top: 0;
+  right: 0;
+}
+.corner-top-right-h {
+  width: 10px;
+  height: 2px;
+  top: 0;
+  right: 0;
+}
+.corner-bot-left-v {
+  width: 2px;
+  height: 10px;
+  bottom: 0;
+  left: 0;
+}
+.corner-bot-left-h {
+  width: 10px;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+}
+.corner-bot-right-v {
+  width: 2px;
+  height: 10px;
+  bottom: 0;
+  right: 0;
+}
+.corner-bot-right-h {
+  width: 10px;
+  height: 2px;
+  bottom: 0;
+  right: 0;
+}
