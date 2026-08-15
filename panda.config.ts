@@ -13,7 +13,14 @@ export default defineConfig({
 
   // Useful for theme customization
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        fadeOut: {
+          from: { opacity: 1 },
+          to: { opacity: 0 }, // transform: `translate(var(--x), var(--y))` },
+        },
+      },
+    },
   },
 
   // The output directory for your css system

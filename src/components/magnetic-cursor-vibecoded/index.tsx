@@ -158,6 +158,7 @@ export const MagneticMotionCursor = () => {
     window.addEventListener("pointerup", onPointerUp);
     document.documentElement.addEventListener("mouseleave", onLeaveWindow);
     document.documentElement.addEventListener("mouseenter", onEnterWindow);
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onPointerMove);
