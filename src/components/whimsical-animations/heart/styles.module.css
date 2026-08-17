@@ -1,0 +1,45 @@
+.container {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.heartBtn {
+  background: none;
+  border: none;
+  position: relative;
+  cursor: pointer;
+}
+
+.heartImg {
+  width: 100px;
+  height: 100px;
+}
+
+/* transparent by default */
+.heartImg path {
+  fill: transparent;
+  transition: fill 0.2s ease;
+}
+
+/* red when liked */
+.heartBtn[data-is-liked="true"] .heartImg path {
+  fill: red;
+}
+
+.particle {
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: explode 0.3s ease-in forwards;
+  opacity: 0;
+}
+
+@keyframes explode {
+  to {
+    transform: translate(var(--move-x), var(--move-y));
+    opacity: 1;
+  }
+}
