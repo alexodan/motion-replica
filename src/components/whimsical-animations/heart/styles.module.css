@@ -6,8 +6,15 @@
 .heartBtn {
   background: none;
   border: none;
-  position: relative;
+  border-radius: 100%;
   cursor: pointer;
+  padding: 10px;
+  position: relative;
+  outline: none;
+}
+
+.heartBtn:hover {
+  background-color: var(--heart-bg-hover);
 }
 
 .heartImg {
@@ -27,19 +34,39 @@
 }
 
 .particle {
-  background-color: white;
   border-radius: 50%;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation: explode 0.3s ease-in forwards;
+  animation:
+    explode 300ms cubic-bezier(0.03, 0.74, 0.55, 0.99) forwards,
+    grow 600ms forwards,
+    fadeOut 1s ease-in;
   opacity: 0;
+  scale: 0;
+}
+
+@keyframes grow {
+  to {
+    scale: 1;
+  }
 }
 
 @keyframes explode {
   to {
     transform: translate(var(--move-x), var(--move-y));
+  }
+}
+
+@keyframes fadeOut {
+  25% {
     opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }

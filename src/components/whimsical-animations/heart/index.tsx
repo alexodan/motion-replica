@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { randomIntBetween } from "./utils";
+import { createParticles, deriveFromChaos } from "./utils";
 import styles from "./styles.module.css";
 
 export function ExplodingHeartDemo() {
@@ -10,18 +10,9 @@ export function ExplodingHeartDemo() {
   );
 }
 
-const createParticles = () =>
-  new Array(12).fill("").map((_, i) => {
-    return {
-      id: i + 1,
-      size: randomIntBetween(10, 18),
-      moveX: (Math.random() > 0.5 ? 1 : -1) * randomIntBetween(10, 35),
-      moveY: (Math.random() > 0.5 ? 1 : -1) * randomIntBetween(10, 35),
-    };
-  });
-
 export function Heart() {
   const [isLiked, setIsLiked] = useState(false);
+  const [chaos, setChaos] = useState(50);
 
   const handleClick = () => setIsLiked((v) => !v);
 
@@ -46,13 +37,16 @@ export function Heart() {
           />
         </svg>
         {isLiked &&
-          createParticles().map((p) => {
+          createParticles({
+            quantity: deriveFromChaos("quantity", chaos),
+          }).map((p) => {
             return (
               <div
                 key={p.id}
                 className={styles.particle}
                 style={
                   {
+                    backgroundColor: p.color,
                     width: `${p.size}px`,
                     height: `${p.size}px`,
                     "--move-x": `${p.moveX}px`,
@@ -63,6 +57,14 @@ export function Heart() {
             );
           })}
       </button>
+      <div>
+        <p>Chaos: {chaos}%</p>
+        <input
+          type="range"
+          value={chaos}
+          onChange={(e) => setChaos(+e.target.value)}
+        />
+      </div>
     </>
   );
 }
